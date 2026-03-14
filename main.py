@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from models import Product
 from database import session, engine
 import database_model
+from sqlalchemy.orm import Session
 
 app = FastAPI()
 
@@ -25,7 +26,17 @@ products = [
     Product(id=4, name="Table", description="A wooden table", price=196.10, quantity=5)
 ]
 
-# Database init
+
+# Dependency init and Injection
+def get_db():
+    db = session()
+    
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Database init - only for trasfer data from List or Dictionary
 def init_db():
     db = session()
 
@@ -41,17 +52,17 @@ def init_db():
 init_db()
 
 @app.get("/products")
-def get_all_products():
-    # db connection
-    # db = session()
-    return products
+def get_all_products(db: Session = Depends(get_db)): # Under brekact - Dependency Injection
+    
+    db_products = db.query(database_model.Product).all()
+    return db_products
 
 # Fetch Single product
 @app.get("/product/{id}")
-def get_product_by_id(id: int):
-    for product in products:
-        if product.id == id:
-            return product
+def get_product_by_id(id: int, db: Session = Depends(get_db)): # Under brekact - Dependency Injection
+    db_product = db.query(database_model.Product).filter(database_model.Product.id == id).first()
+    if db_product:
+        return db_product
     return "Product Not found"
 
 # Add product
