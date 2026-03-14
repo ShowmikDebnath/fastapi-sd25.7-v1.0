@@ -25,10 +25,25 @@ products = [
     Product(id=4, name="Table", description="A wooden table", price=196.10, quantity=5)
 ]
 
+# Database init
+def init_db():
+    db = session()
+
+    count = db.query(database_model.Product).count
+
+    if count == 0:
+        for product in products:
+            db.add(database_model.Product(**product.model_dump())) # ** means unpacking- modle_dump gives row data but ** manage it for the database structure
+
+        db.commit()
+    
+
+init_db()
+
 @app.get("/products")
 def get_all_products():
     # db connection
-    db = session()
+    # db = session()
     return products
 
 # Fetch Single product
