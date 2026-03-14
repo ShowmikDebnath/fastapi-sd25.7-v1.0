@@ -67,30 +67,40 @@ def get_product_by_id(id: int, db: Session = Depends(get_db)): # Under brekact -
 
 # Add product
 @app.post("/product")
-def add_product(product: Product):
-    products.append(product)
+def add_product(product: Product, db: Session = Depends(get_db)):
+    db.add(database_model.Product(**product.model_dump()))
+    db.commit()
     return product
 
 
 # Update Product
 
 @app.put("/product")
-def update_product(id: int, product: Product):
-    for i in range(len(products)):
-        if products[i].id == id:
-            products[i] = product
-            return "Product Updated Successfully"
-    
-    return "Product not found!"
+def update_product(id: int, product: Product, db: Session = Depends(get_db)):
+    db_product = db.query(database_model.Product).filter(database_model.Product.id == id).first()
+    if db_product:
+        db_product.name = product.name
+        db_product.description = product.description
+        db_product.price = product.price
+        db_product.quantity = product.quantity
+
+        db.commit()
+        return "Product Updated"
+    else:
+        return "Product not found!"
 
 # Product Delete
 @app.delete("/product")
-def delete_product(id: int):
-    for i in range(len(products)):
-        if products[i].id == id:
-            del products[i]
-            return "Product Deleted Successfully!"
-    return "Product not found!"
+def delete_product(id: int, db: Session = Depends(get_db)):
+    db_product = db.query(database_model.Product).filter(database_model.Product.id == id).first()
+    if db_product:
+        db.delete(db_product)
+        db.commit()
+        return "Product Deleted Successfully!"
+    else:
+        return "Product not found!"
+
+    
 
 
 
